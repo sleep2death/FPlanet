@@ -57,7 +57,10 @@ package fplanet{
 			context.configureBackBuffer(stageWidth, stageHeight, 4, true);
 
 			createSphere();
-			testDraw();
+			createTexture();
+			essemble();
+
+			root.addEventListener(Event.ENTER_FRAME, onEnterFrame);
 		}
 
 
@@ -142,17 +145,7 @@ package fplanet{
 			trace("vertices: " + vertices.length + " | indices: " + indices.length + " | uvs: " + uvData.length);
 		}
 
-		[Embed(source="../../res/earth.jpg")]
-		private var BlueMarblePic : Class;
-		private var bm : Bitmap = new BlueMarblePic() as Bitmap;
-
-		private function testDraw() : void {
-			trace("BitmapData: " + bm.width + "x" + bm.height);
-
-			var texture : Texture = context.createTexture(2048, 1024, Context3DTextureFormat.BGRA, true );
-			texture.uploadFromBitmapData( bm.bitmapData );
-			context.setTextureAt(1, texture);
-
+		private function essemble() : void {
 			var v_assembler : AGALMiniAssembler = new AGALMiniAssembler();
 			v_assembler.assemble(Context3DProgramType.VERTEX, 
 					"mov vt0, va0 \n" + 
@@ -163,12 +156,9 @@ package fplanet{
 			var f_assembler : AGALMiniAssembler = new AGALMiniAssembler();
 			f_assembler.assemble( Context3DProgramType.FRAGMENT,
 					"mov ft0, v0\n"+
-					"tex ft1, ft0.xyz, fs1.xyz <2d,clamp,linear>\n"+ 
-					//"sge ft2, ft1, fc0 \n"+
-					"mov oc, ft1\n"
-					);
-
-			//context.setProgramConstantsFromVector(Context3DProgramType.FRAGMENT, 0, Vector.<Number>([0, 0, 0.001, 1]));
+					"tex ft1, ft0, fs0 <2d,clamp,linear>\n"+ 
+					"tex ft2, ft0, fs1 <2d,clamp,linear>\n"+ 
+					"add oc, ft1, ft2\n");
 
 			var program : Program3D = context.createProgram();
 			program.upload(v_assembler.agalcode, f_assembler.agalcode);
@@ -187,8 +177,25 @@ package fplanet{
 			var num_i : uint = indices.length;
 			indexBuffer = context.createIndexBuffer(num_i);
 			indexBuffer.uploadFromVector(indices, 0, num_i);
+		}
 
-			root.addEventListener(Event.ENTER_FRAME, onEnterFrame);
+		[Embed(source="../../res/earth.jpg")]
+		private var EarthSrc : Class;
+		private var earthSrc : Bitmap = new EarthSrc() as Bitmap;
+
+		[Embed(source="../../res/clouds.jpg")]
+		private var CloudsSrc : Class;
+		private var cloudsSrc : Bitmap = new CloudsSrc() as Bitmap;
+
+		private function createTexture() : void {
+			var t0 : Texture = context.createTexture(textureW, textureH, Context3DTextureFormat.BGRA, true );
+			t0.uploadFromBitmapData( earthSrc.bitmapData );
+			context.setTextureAt(0, t0);
+
+			var t1: Texture = context.createTexture(textureW, textureH, Context3DTextureFormat.BGRA, true );
+			t1.uploadFromBitmapData( cloudsSrc.bitmapData );
+			context.setTextureAt(1, null);
+			context.setTextureAt(1, t1);
 		}
 
 		private var rotation : Number = 0;
@@ -212,7 +219,6 @@ package fplanet{
 			context.clear();
 
 			context.drawTriangles(indexBuffer);
-
 			context.present();
 		}
 
