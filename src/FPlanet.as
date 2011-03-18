@@ -3,15 +3,15 @@ package{
 	import flash.display.Sprite;
 	import flash.events.Event;
 
-	import tp.Planet;
+	import fplanet.Earth;
 
-	public class TalkingPlanet extends Sprite {
-		public function TalkingPlanet() : void {
+	public class FPlanet extends Sprite {
+		public function FPlanet() : void {
 			this.addEventListener(Event.ADDED_TO_STAGE, onAdded);
 		}
 
 		public function onAdded(evt : Event) : void {
-			Planet.init(stage);
+			Earth.init(stage);
 		}
 	}
 }

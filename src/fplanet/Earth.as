@@ -1,4 +1,4 @@
-package tp{
+package fplanet{
 	import flash.display.*;
 	import flash.display3D.*;
 	import flash.display3D.textures.*;
@@ -9,8 +9,8 @@ package tp{
 
 	import com.adobe.utils.*;
 
-	public class Planet {
-		private static var instance : Planet;
+	public class Earth {
+		private static var instance : Earth;
 		private static var root : Stage;
 		private static var stage : Stage3D;
 		private static var context : Context3D;
@@ -21,10 +21,14 @@ package tp{
 
 		private static const segmentsH : uint = 40;
 		private static const segmentsW : uint = 40;
-		private static const radius : uint = 162;
+
+		private static const textureW : uint = 2048;
+		private static const textureH : uint = 1024;
+
+		private static const radius : Number = textureW * 0.5 / Math.PI;
 
 
-		public function Planet(theStage : Stage) : void {
+		public function Earth(theStage : Stage) : void {
 			if(instance) throw new Error("Our planet is unique!");
 
 			stageWidth = theStage.stageWidth;
@@ -35,9 +39,9 @@ package tp{
 			getContext3D();
 		}
 		
-		public static function init(stage : Stage) : Planet {
+		public static function init(stage : Stage) : Earth {
 			if(instance == null) {
-				instance = new Planet(stage);
+				instance = new Earth(stage);
 			}
 			return instance;
 		}
@@ -138,14 +142,14 @@ package tp{
 			trace("vertices: " + vertices.length + " | indices: " + indices.length + " | uvs: " + uvData.length);
 		}
 
-		[Embed(source="../../res/march.jpg")]
+		[Embed(source="../../res/earth.jpg")]
 		private var BlueMarblePic : Class;
 		private var bm : Bitmap = new BlueMarblePic() as Bitmap;
 
 		private function testDraw() : void {
 			trace("BitmapData: " + bm.width + "x" + bm.height);
 
-			var texture : Texture = context.createTexture(1024, 512, Context3DTextureFormat.BGRA, true );
+			var texture : Texture = context.createTexture(2048, 1024, Context3DTextureFormat.BGRA, true );
 			texture.uploadFromBitmapData( bm.bitmapData );
 			context.setTextureAt(1, texture);
 
@@ -159,12 +163,12 @@ package tp{
 			var f_assembler : AGALMiniAssembler = new AGALMiniAssembler();
 			f_assembler.assemble( Context3DProgramType.FRAGMENT,
 					"mov ft0, v0\n"+
-					"tex ft1, ft0, fs1 <2d,clamp,linear>\n"+ 
-					"sge ft2, ft1, fc0 \n"+
+					"tex ft1, ft0.xyz, fs1.xyz <2d,clamp,linear>\n"+ 
+					//"sge ft2, ft1, fc0 \n"+
 					"mov oc, ft1\n"
 					);
 
-			context.setProgramConstantsFromVector(Context3DProgramType.FRAGMENT, 0, Vector.<Number>([0, 0, 0.001, 1]));
+			//context.setProgramConstantsFromVector(Context3DProgramType.FRAGMENT, 0, Vector.<Number>([0, 0, 0.001, 1]));
 
 			var program : Program3D = context.createProgram();
 			program.upload(v_assembler.agalcode, f_assembler.agalcode);
@@ -180,7 +184,6 @@ package tp{
 			context.setVertexBufferAt(0, vb, 0, Context3DVertexBufferFormat.FLOAT_3);
 			context.setVertexBufferAt(1, uvb, 0, Context3DVertexBufferFormat.FLOAT_2);
 
-			
 			var num_i : uint = indices.length;
 			indexBuffer = context.createIndexBuffer(num_i);
 			indexBuffer.uploadFromVector(indices, 0, num_i);
@@ -192,13 +195,13 @@ package tp{
 		private function onEnterFrame(evt : Event) : void {
 			var pers : PerspectiveMatrix3D = new PerspectiveMatrix3D();
 			pers.identity();
-			pers.perspectiveLH(7.5, 4.6, 5, 1000000);
+			pers.perspectiveLH(7.5, 4.6, 3, 1000000);
 			var modelView : Matrix3D = new Matrix3D();
 			modelView.identity();
 			modelView.appendRotation(90, Vector3D.X_AXIS);
 			rotation -= 0.2;
 			modelView.appendRotation(rotation, Vector3D.Y_AXIS);
-			modelView.appendTranslation(0, 0, 512);
+			modelView.appendTranslation(0, 0, radius * 2);
 
 			var m : Matrix3D = new Matrix3D();
 			m.identity();

@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<project name="Talking-Planet" default="debug" basedir=".">
+<project name="FPlanet" default="debug" basedir=".">
     <property name="BASE_DIR" value="/Volumes/DATA/ws/fl2/"/>
     <property name="FLEX_HOME" value="${BASE_DIR}/4_5_0"/>
     <property name="SWF_OBJECT" value="swfobject"/>
@@ -9,7 +9,7 @@
     <property name="so.js" value="${SWF_OBJECT}/swfobject.js"/>
 
     <property name="app.root" value="."/>
-    <property name="app.name" value="TalkingPlanet"/>
+    <property name="app.name" value="FPlanet"/>
 
     <property name="app.src" value="${app.root}/src"/>
     <property name="app.libs" value="${app.root}/libs"/>
