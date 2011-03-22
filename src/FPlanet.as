@@ -1,9 +1,11 @@
 package{
 
 	import flash.display.Sprite;
+	import flash.display.Shape;
 	import flash.events.Event;
 
 	import fplanet.Earth;
+	import fplanet.GeoClock;
 
 	public class FPlanet extends Sprite {
 		public function FPlanet() : void {
