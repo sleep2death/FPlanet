@@ -1,0 +1,19 @@
+<languageVersion : 1.0;>
+vertex kernel VertexKernel
+<
+    namespace : "FPlanet";
+    vendor : "Aspirin";
+    version : 1;
+>
+{    
+    parameter float4x4 objectToClipSpaceTransform;
+    
+    input vertex float4 vertexPosition;
+
+    output float4 vertexClipPosition;
+
+    void evaluateVertex() 
+    {
+        vertexClipPosition = vertexPosition * objectToClipSpaceTransform;
+    }
+}

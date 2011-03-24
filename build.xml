@@ -2,6 +2,7 @@
 <project name="FPlanet" default="debug" basedir=".">
     <property name="BASE_DIR" value="/Volumes/DATA/ws/fl2/"/>
     <property name="FLEX_HOME" value="${BASE_DIR}/4_5_0"/>
+    <property name="PIXEL_BENDER" value="${BASE_DIR}/pixelbender3d/bin/mac/pb3dutil.app/Contents/MacOS"/>
     <property name="SWF_OBJECT" value="swfobject"/>
     <taskdef resource="flexTasks.tasks" classpath="${FLEX_HOME}/ant/lib/flexTasks.jar"/>
 
@@ -15,17 +16,36 @@
     <property name="app.libs" value="${app.root}/libs"/>
     <property name="app.bin" value="${app.root}/bin"/>
 
+    <property name="app.shader" value="${app.root}/shaders}"/>
+    <property name="app.shader.vertex" value="${app.shaders}/EarthVertex}"/>
+
     <property name="app.width" value="750"/>
     <property name="app.height" value="460"/>
 
+    <target name="shader" depends="clean">
+        <exec executable="${PIXEL_BENDER}/pb3dutil">
+            <arg line="shaders/vertexKernel.pbvk"/>
+            <arg line="shaders/vertexProgram.pbasm"/>
+        </exec>
 
-    <target name="compile" depends="clean">
+        <exec executable="${PIXEL_BENDER}/pb3dutil">
+            <arg line="shaders/materialKernel.pbmk"/>
+            <arg line="shaders/matVertProg.pbasm"/>
+            <arg line="shaders/fragProgram.pbasm"/>
+        </exec>
+    </target>
+
+    <target name="compile" depends="shader">
         <mxmlc file="${app.src}/${app.name}.as" output="${app.bin}/${app.name}.swf" 
             default-background-color="0x000000" 
             actionscript-file-encoding="UTF-8"
             static-link-runtime-shared-libraries="true" 
             debug="true"
             incremental="true">
+
+            <compiler.include-libraries dir="${app.libs}" append="true">
+                <include name="pb3dlib.swc"/>
+            </compiler.include-libraries>
 
             <!-- Include the away3D core -->
             <!-- <compiler.source-path path-element="../away3d-core-broomstick/src"/> -->

@@ -1,0 +1,66 @@
+module_fragment_program MaterialKernel
+
+    metadata
+        namespace const(string, "FPlanet")
+        vendor const(string, "Aspirin")
+        version const(int, 1)
+    end_metadata
+    
+    transformations
+        SCF INTOSSA OPT(DCE* {APR DCE*}*)
+    end_transformations
+    
+    globals
+        input image image-4 inputImage
+        global parameter float-2 panning
+            metadata
+                minValue const(float-2, (-1, -1))
+                maxValue const(float-2, (1, 1))
+                defaultValue const(float-2, (0, 0))
+            end_metadata
+        global parameter float zoomFactor
+            metadata
+                minValue const(float, 0)
+                maxValue const(float, 2)
+                defaultValue const(float, 1)
+            end_metadata
+        input vertex float-4 UVCoord
+        interpolated float-4 interpolatedCoord
+            metadata
+                id const(string, "_0_interpolatedCoord")
+            end_metadata
+        output fragment float-4 result
+    end_globals
+    
+    functions
+        external_function void evaluateFragment()
+            body
+                basic_block entry%A !! outlets(basic%A)
+                    cx-0 = allocNonSSA type(float) : float
+                    cy-0 = allocNonSSA type(float) : float
+                    coord-0 = allocNonSSA type(float-2) : float-2
+                    jump block(basic%A) : void
+                end_basic_block
+                basic_block basic%A !! inlets(entry%A) outlets(exit%A)
+                    _LD_cx-1 = extractVE interpolatedCoord, const(int, 0) : float
+                    _LD_cy-1 = extractVE interpolatedCoord, const(int, 1) : float
+                    panningElem%A-0 = extractVE panning, const(int, 0) : float
+                    _LD_cx-2 = add _LD_cx-1, panningElem%A-0 : float
+                    panningElem%B-0 = extractVE panning, const(int, 1) : float
+                    _LD_cy-2 = add _LD_cy-1, panningElem%B-0 : float
+                    _LD_cx-3 = mul _LD_cx-2, zoomFactor : float
+                    _LD_cy-3 = mul _LD_cy-2, zoomFactor : float
+                    _LD_coord-1 = makeFloatVector _LD_cx-3, _LD_cy-3 : float-2
+                    _LD_result-1 = sample inputImage, _LD_coord-1, const(_sample_option, nearest mipdisable clamp 2D ) : float-4
+                    jump block(exit%A) : void
+                end_basic_block
+                basic_block exit%A !! inlets(basic%A)
+                    moveToNonSSA _LD_result-1, result : void
+                    ret : void
+                end_basic_block
+            end_body
+        end_external_function
+    end_functions
+    
+end_module_fragment_program
+

@@ -1,0 +1,43 @@
+<languageVersion : 1.0;>
+material kernel MaterialKernel
+<
+    namespace : "FPlanet";
+    vendor : "Aspirin";
+    version : 1;
+>
+{
+    output float4 result;
+    input image4 inputImage;
+    input vertex float4 UVCoord;
+    interpolated float4 interpolatedCoord;
+    
+    parameter float zoomFactor
+    < minValue: 0.0;
+      maxValue: 2.0;
+      defaultValue: 1.0;>;
+      
+    parameter float2 panning
+    < minValue: float2(-1.0, -1.0);
+      maxValue: float2(1.0, 1.0);
+      defaultValue: float2(0.0, 0.0);>;
+    
+    void evaluateVertex()
+    {
+        interpolatedCoord = UVCoord;
+    }
+    
+    void evaluateFragment()
+    {
+        float cx = interpolatedCoord.x;
+        float cy = interpolatedCoord.y;
+
+		cx += panning.x;
+		cy += panning.y;
+
+        cx *= zoomFactor;
+        cy *= zoomFactor;
+        float2 coord = float2(cx, cy);
+        
+        result = sample(inputImage, coord);
+    }
+}

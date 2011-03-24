@@ -14,6 +14,8 @@ package{
 
 		public function onAdded(evt : Event) : void {
 			Earth.init(stage);
+			//var sp : Shape = GeoClock.getInstance().updateTerminatorMap(750, 460);
+			//addChild(sp);
 		}
 	}
 }

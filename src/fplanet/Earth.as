@@ -27,7 +27,6 @@ package fplanet{
 
 		private static const radius : Number = textureW * 0.5 / Math.PI;
 
-
 		public function Earth(theStage : Stage) : void {
 			if(instance) throw new Error("Our planet is unique!");
 
@@ -56,9 +55,11 @@ package fplanet{
 			context = stage.context3D;
 			context.configureBackBuffer(stageWidth, stageHeight, 4, true);
 
+			var s : EarthShader = EarthShader.getInstance(context);
 			createSphere();
 			createTexture();
 			essemble();
+			createPerspective();
 
 			root.addEventListener(Event.ENTER_FRAME, onEnterFrame);
 		}
@@ -181,8 +182,16 @@ package fplanet{
 			var uvb : VertexBuffer3D = context.createVertexBuffer(num_v, 2);
 			uvb.uploadFromVector(uvData, 0, num_v);
 
+			//var nb : VertexBuffer3D = context.createVertexBuffer(num_v, 3);
+			//nb.uploadFromVector(vertexNormals, 3, num_v);
+
+			//var tb : VertexBuffer3D = context.createVertexBuffer(num_v, 3);
+			//tb.uploadFromVector(vertexTangents, 3, num_v);
+
 			context.setVertexBufferAt(0, vb, 0, Context3DVertexBufferFormat.FLOAT_3);
 			context.setVertexBufferAt(1, uvb, 0, Context3DVertexBufferFormat.FLOAT_2);
+			//context.setVertexBufferAt(2, nb, 0, Context3DVertexBufferFormat.FLOAT_3);
+			//context.setVertexBufferAt(3, tb, 0, Context3DVertexBufferFormat.FLOAT_3);
 
 			var num_i : uint = indices.length;
 			indexBuffer = context.createIndexBuffer(num_i);
@@ -228,21 +237,30 @@ package fplanet{
 		}
 
 		private var rotation : Number = 0;
-		private function onEnterFrame(evt : Event) : void {
-			var pers : PerspectiveMatrix3D = new PerspectiveMatrix3D();
-			pers.identity();
-			pers.perspectiveLH(7.5, 4.6, 3, 1000000);
+		private var pers : PerspectiveMatrix3D;
+		private var camera : Matrix3D;
+		private var modelView : Matrix3D;
 
-			var modelView : Matrix3D = new Matrix3D();
+		private function createPerspective() : void {
+			pers = new PerspectiveMatrix3D();
+			pers.perspectiveLH(1, 1/7.5 * 4.6, 3, 1000000);
+
+			camera = new Matrix3D();
+			camera.appendTranslation(0, 0, radius*10);
+		
+			modelView = new Matrix3D();
+		}
+
+		private function onEnterFrame(evt : Event) : void {
+			rotation -= 0.2;
 			modelView.identity();
 			modelView.appendRotation(90, Vector3D.X_AXIS);
-			rotation -= 0.2;
 			modelView.appendRotation(rotation, Vector3D.Y_AXIS);
-			modelView.appendTranslation(0, 0, 2 * radius);
 
 			var m : Matrix3D = new Matrix3D();
 			m.identity();
 			m.append(modelView);
+			m.append(camera);
 			m.append(pers);
 
 			context.setProgramConstantsFromMatrix(Context3DProgramType.VERTEX, 0, m, true);
