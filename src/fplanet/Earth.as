@@ -151,8 +151,10 @@ package fplanet{
 			v_assembler.assemble(Context3DProgramType.VERTEX, 
 					"mov vt0, va0 \n" + 
 					"mov vt1, va1 \n" + 
+					"mov vt2, va2 \n" + 
 					"m44 op, vt0, vc0 \n" + 
-					"mov v0, vt1");
+					"mov v0, vt1 \n" + 
+					"mov v1, vt2");
 
 			var f_assembler : AGALMiniAssembler = new AGALMiniAssembler();
 			f_assembler.assemble( Context3DProgramType.FRAGMENT,
@@ -161,14 +163,21 @@ package fplanet{
 					"tex ft1, ft0, fs0 <2d,clamp,linear>\n"+ 
 					"tex ft2, ft0, fs1 <2d,clamp,linear>\n"+ 
 					"tex ft3, ft0, fs2 <2d,clamp,linear>\n"+ 
-					"tex ft4, ft0, fs3 <2d,clamp,linear>\n"+ 
+					//"tex ft4, ft0, fs3 <2d,clamp,linear>\n"+ 
 
-					"mul ft5, ft1, ft4\n"+//merge earth and terminator map
-					"sub ft6, fc0, ft4\n"+//invert twilight zone
-					"mul ft7, ft2, ft6\n"+//merge night and inverted terminator map
-					"add ft0, ft7, ft5\n"+//merge night and earth
+					//"mul ft5, ft1, ft4\n"+//merge earth and terminator map
+					//"sub ft6, fc0, ft4\n"+//invert twilight zone
+					//"mul ft7, ft2, ft6\n"+//merge night and inverted terminator map
+					//"add ft0, ft7, ft5\n"+//merge night and earth
+					"dp3 ft4, fc2, v1\n"+ //dp light and uv
+					"mul ft5, fc3, ft4\n"+ //invert light
+					"sge ft6, ft5, fc4\n"+ //make mask
+					"mul ft1, ft1, ft6\n"+ //mask day
+					"sge ft6, fc4, ft6\n"+ //invert mask
+					"mul ft2, ft2, ft6\n"+ //invert mask
+
 					"mul ft3, ft3, fc1\n"+//make a little alpha for clouds
-					"add oc, ft0, ft3"
+					"add oc, ft1, ft2"
 					);
 
 			var program : Program3D = context.createProgram();
@@ -182,15 +191,15 @@ package fplanet{
 			var uvb : VertexBuffer3D = context.createVertexBuffer(num_v, 2);
 			uvb.uploadFromVector(uvData, 0, num_v);
 
-			//var nb : VertexBuffer3D = context.createVertexBuffer(num_v, 3);
-			//nb.uploadFromVector(vertexNormals, 3, num_v);
+			var nb : VertexBuffer3D = context.createVertexBuffer(num_v, 3);
+			nb.uploadFromVector(vertexNormals, 0, num_v);
 
 			//var tb : VertexBuffer3D = context.createVertexBuffer(num_v, 3);
 			//tb.uploadFromVector(vertexTangents, 3, num_v);
 
 			context.setVertexBufferAt(0, vb, 0, Context3DVertexBufferFormat.FLOAT_3);
 			context.setVertexBufferAt(1, uvb, 0, Context3DVertexBufferFormat.FLOAT_2);
-			//context.setVertexBufferAt(2, nb, 0, Context3DVertexBufferFormat.FLOAT_3);
+			context.setVertexBufferAt(2, nb, 0, Context3DVertexBufferFormat.FLOAT_3);
 			//context.setVertexBufferAt(3, tb, 0, Context3DVertexBufferFormat.FLOAT_3);
 
 			var num_i : uint = indices.length;
@@ -198,8 +207,22 @@ package fplanet{
 			indexBuffer.uploadFromVector(indices, 0, num_i);
 
 			context.setProgramConstantsFromVector(Context3DProgramType.FRAGMENT, 0, Vector.<Number>([1, 1, 1, 1]));
+
 			var cloudAlpha : Number = 0.8;
 			context.setProgramConstantsFromVector(Context3DProgramType.FRAGMENT, 1, Vector.<Number>([cloudAlpha, cloudAlpha, cloudAlpha, 1]));
+
+			var geoClock : GeoClock = GeoClock.getInstance();
+			solarPosition = geoClock.updateTerminatorMap();
+
+			context.setProgramConstantsFromVector(Context3DProgramType.FRAGMENT, 2, Vector.<Number>([solarPosition.x, solarPosition.y, solarPosition.z, 1]));
+
+			context.setProgramConstantsFromVector(Context3DProgramType.FRAGMENT, 3, Vector.<Number>([-1, -1, -1, 1]));
+
+			context.setProgramConstantsFromVector(Context3DProgramType.FRAGMENT, 4, Vector.<Number>([0, 0, 0, 0]));
+			
+
+			//context.setProgramConstantsFromVector(Context3DProgramType.FRAGMENT, 2, Vector.<Number>([solarPosition.x, solarPosition.y, solarPosition.z, 1]));
+
 		}
 
 		[Embed(source="../../res/earth.jpg")]
@@ -214,10 +237,9 @@ package fplanet{
 		private var CloudsSrc : Class;
 		private var cloudsSrc : Bitmap = new CloudsSrc() as Bitmap;
 
+		private var solarPosition : Vector3D;
+
 		private function createTexture() : void {
-			var geoClock : GeoClock = GeoClock.getInstance();
-			var bd : BitmapData = new BitmapData(textureW, textureH);
-			bd.draw(geoClock.updateTerminatorMap(textureW, textureH));
 
 			var t0 : Texture = context.createTexture(textureW, textureH, Context3DTextureFormat.BGRA, true );
 			t0.uploadFromBitmapData( earthSrc.bitmapData );
@@ -231,9 +253,9 @@ package fplanet{
 			t2.uploadFromBitmapData( cloudsSrc.bitmapData );
 			context.setTextureAt(2, t2);
 
-			var mask : Texture = context.createTexture(textureW, textureH, Context3DTextureFormat.BGRA, true );
-			mask.uploadFromBitmapData(bd);
-			context.setTextureAt(3, mask);
+			//var mask : Texture = context.createTexture(textureW, textureH, Context3DTextureFormat.BGRA, true );
+			//mask.uploadFromBitmapData(bd);
+			//context.setTextureAt(3, mask);
 		}
 
 		private var rotation : Number = 0;

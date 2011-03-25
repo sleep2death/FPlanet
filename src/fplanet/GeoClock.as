@@ -23,7 +23,7 @@ package fplanet{
 
 		private var declination : Number;
 
-		public function updateTerminatorMap(w : int, h : int) : Shape {
+		public function updateTerminatorMap() : Vector3D {
 			var currentDay : Date = new Date();
 			var year : Number = currentDay.fullYear;
 			var month : Number = currentDay.month + 1;
@@ -74,68 +74,77 @@ package fplanet{
 			var delta : Number = Math.asin(Math.sin(K*eps)*Math.sin(K*lambda));
 			delta = delta/K;	
 			declination = delta;
-			//declination = 23;
 			trace("Declination: " + declination);
 
-			UT = 12;
 			var tau : Number = 360 * (UT - 12) / 24;
-			var t : Number = tau/15;
 			var dec : Number = declination;
 
-			trace("SUN POS:" + x + " | " + y + " | " + z);
+			trace("TAU: " + tau);
 
-			var shape : Shape = new Shape();
-			var g : Graphics = shape.graphics;
+			tau = 180 - tau + 180;
+			dec = 90 - dec;
 
-			var scale : Number = w*0.5/180;
-			var x0 : Number = 180*scale;
-			var y0 : Number = 90*scale;
+			var v : Vector3D = new Vector3D(1, 0, 0);
+			
+			var mtx : Matrix3D = new Matrix3D();
+			mtx.appendRotation(tau, Vector3D.Z_AXIS);
+			mtx.appendRotation(dec, Vector3D.Y_AXIS);
 
-			g.beginFill(0x000000);
-			g.drawRect(0, 0, 2*x0, 2*y0);
-			g.endFill();
+			v = Utils3D.projectVector(mtx, v);
+			return v;
 
-			g.beginFill(0xFFFFFF, 1);
+			//var shape : Shape = new Shape();
+			//var g : Graphics = shape.graphics;
 
-			var i : Number = -190*scale;
-			g.moveTo(0,0);
-			g.lineStyle(0, 0, 0);
+			//var scale : Number = w*0.5/180;
+			//var x0 : Number = 180*scale;
+			//var y0 : Number = 90*scale;
 
-			var mtx : Matrix = new Matrix();
+			//g.beginFill(0x000000);
+			//g.drawRect(0, 0, 2*x0, 2*y0);
+			//g.endFill();
 
-			while(i < 190*scale){
-				var longitude : Number =i/scale+tau;
-				var tanLat : Number = -Math.cos(longitude*K)/Math.tan(dec*K);						
-				var arctanLat : Number = Math.atan(tanLat)/K;
-				var y1 : Number = y0 - arctanLat*scale;
-				
-				longitude=longitude+(1/scale);
-				tanLat = - Math.cos(longitude*K)/Math.tan(dec*K);
-				arctanLat = Math.atan(tanLat)/K;
-				var y2 : Number  = y0 - arctanLat*scale;
+			//g.beginFill(0xFFFFFF, 1);
 
-				var a1 : Number = (x0 + i);
-				var a2 : Number = (x0 + (i + 1));
-				g.lineTo(a1, y1);
-				var W: Number = Math.sqrt((a2 - a1)*(a2 - a1) + (y2 -y1)*(y2 - y1));
-				mtx.identity();
-				var rad : Number = Math.atan((y2-y1)/(a2-a1)); 
-				mtx.createGradientBox(32, 32, rad - Math.PI/2, a1 - 16, y1 - 16);
-				g.lineStyle(32, 0, 1, true, "noScale");
-				g.lineGradientStyle(GradientType.LINEAR, [0x000000, 0xFFFFFF], [1, 1], [0, 255], mtx);
-				g.lineTo(a2, y2);
-				i+=1;
+			//var i : Number = -190*scale;
+			//g.moveTo(0,0);
+			//g.lineStyle(0, 0, 0);
 
-				g.lineStyle(0, 0, 0);
-			}
+			//var mtx : Matrix = new Matrix();
 
-			g.lineStyle(0, 0, 0);
-			g.lineTo(w, 0);
-			g.lineTo(0, 0);
+			//while(i < 190*scale){
+			//	var longitude : Number =i/scale+tau;
+			//	var tanLat : Number = -Math.cos(longitude*K)/Math.tan(dec*K);						
+			//	var arctanLat : Number = Math.atan(tanLat)/K;
+			//	var y1 : Number = y0 - arctanLat*scale;
+			//	
+			//	longitude=longitude+(1/scale);
+			//	tanLat = - Math.cos(longitude*K)/Math.tan(dec*K);
+			//	arctanLat = Math.atan(tanLat)/K;
+			//	var y2 : Number  = y0 - arctanLat*scale;
 
-			g.endFill();
+			//	var a1 : Number = (x0 + i);
+			//	var a2 : Number = (x0 + (i + 1));
+			//	g.lineTo(a1, y1);
+			//	var W: Number = Math.sqrt((a2 - a1)*(a2 - a1) + (y2 -y1)*(y2 - y1));
+			//	mtx.identity();
+			//	var rad : Number = Math.atan((y2-y1)/(a2-a1)); 
+			//	mtx.createGradientBox(32, 32, rad - Math.PI/2, a1 - 16, y1 - 16);
+			//	g.lineStyle(32, 0, 1, true, "noScale");
+			//	g.lineGradientStyle(GradientType.LINEAR, [0x000000, 0xFFFFFF], [1, 1], [0, 255], mtx);
+			//	g.lineTo(a2, y2);
+			//	i+=1;
 
-			return shape;
+			//	g.lineStyle(0, 0, 0);
+			//}
+
+			//g.lineStyle(0, 0, 0);
+			//g.lineTo(w, 0);
+			//g.lineTo(0, 0);
+
+			//g.endFill();
+
+			//return shape;
 			
 		}
 	}
