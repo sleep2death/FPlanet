@@ -87,8 +87,8 @@ package fplanet{
 			var v : Vector3D = new Vector3D(1, 0, 0);
 			
 			var mtx : Matrix3D = new Matrix3D();
-			mtx.appendRotation(tau, Vector3D.Z_AXIS);
-			mtx.appendRotation(dec, Vector3D.Y_AXIS);
+			mtx.appendRotation(tau, Vector3D.Y_AXIS);
+			mtx.appendRotation(dec, Vector3D.X_AXIS);
 
 			v = Utils3D.projectVector(mtx, v);
 			return v;
