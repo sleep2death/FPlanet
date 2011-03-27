@@ -84,7 +84,7 @@ package fplanet{
 			tau = 180 - tau + 180;
 			dec = 90 - dec;
 
-			var v : Vector3D = new Vector3D(1, 0, 0);
+			var v : Vector3D = new Vector3D(1.1, 0, 0);
 			
 			var mtx : Matrix3D = new Matrix3D();
 			mtx.appendRotation(tau, Vector3D.Y_AXIS);
