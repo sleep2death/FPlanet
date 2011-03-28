@@ -55,10 +55,11 @@ package fplanet{
 			context = stage.context3D;
 			context.configureBackBuffer(stageWidth, stageHeight, 4, true);
 
-			var s : EarthShader = EarthShader.getInstance(context);
-			createSphere();
-			createTexture();
-			essemble();
+			Assembler.context = context;
+
+			createVertices();
+			createTextures();
+			assemble();
 			createPerspective();
 
 			root.addEventListener(Event.ENTER_FRAME, onEnterFrame);
@@ -75,7 +76,7 @@ package fplanet{
 
 		private var indexBuffer : IndexBuffer3D;
 
-		private function createSphere() : void {
+		private function createVertices() : void {
 			var i : uint, j : uint, triIndex : uint;
 
 			var numVerts : uint = (segmentsH + 1) * (segmentsW + 1);
@@ -146,18 +147,45 @@ package fplanet{
 			trace("vertices: " + vertices.length + " | indices: " + indices.length + " | uvs: " + uvData.length);
 		}
 
-		private function essemble() : void {
-			var v_assembler : AGALMiniAssembler = new AGALMiniAssembler();
-			v_assembler.assemble(Context3DProgramType.VERTEX, 
+		[Embed(source="../../res/earth.jpg")]
+		private var DaySrc : Class;
+		private var daySrc : Bitmap = new DaySrc() as Bitmap;
+		private var dayTexture : Texture;
+
+		[Embed(source="../../res/night.jpg")]
+		private var NightSrc : Class;
+		private var nightSrc : Bitmap = new NightSrc() as Bitmap;
+		private var nightTexture : Texture;
+
+		[Embed(source="../../res/clouds.jpg")]
+		private var CloudsSrc : Class;
+		private var cloudsSrc : Bitmap = new CloudsSrc() as Bitmap;
+		private var cloudTexture : Texture;
+
+		private var solarPosition : Vector3D;
+
+		private function createTextures() : void {
+			dayTexture = context.createTexture(textureW, textureH, Context3DTextureFormat.BGRA, true );
+			dayTexture.uploadFromBitmapData( daySrc.bitmapData );
+
+			nightTexture = context.createTexture(textureW, textureH, Context3DTextureFormat.BGRA, true );
+			nightTexture.uploadFromBitmapData( nightSrc.bitmapData );
+
+			cloudTexture = context.createTexture(textureW, textureH, Context3DTextureFormat.BGRA, true );
+			cloudTexture.uploadFromBitmapData( cloudsSrc.bitmapData );
+
+			Assembler.uploadTextures(dayTexture, nightTexture, cloudTexture);
+		}
+
+		private function assemble() : void {
+			var v_assembler : String = 
 					"mov vt0, va0 \n" + 
 					"mov vt1, va1 \n" + 
 					"mov vt2, va2 \n" + 
 					"m44 op, vt0, vc0 \n" + 
 					"mov v0, vt1 \n" + 
-					"mov v1, vt2");
-
-			var f_assembler : AGALMiniAssembler = new AGALMiniAssembler();
-			f_assembler.assemble( Context3DProgramType.FRAGMENT,
+					"mov v1, vt2";
+			var f_assembler : String = 
 					"mov ft0, v0\n"+
 					//add textures
 					"tex ft1, ft0, fs0 <2d,clamp,linear>\n"+ 
@@ -174,82 +202,33 @@ package fplanet{
 					"mul ft3, ft3, fc5\n"+//make a little darker to cloud
 					"add ft1, ft1, ft3\n"+//add cloud
 					"add oc, ft2, ft1"//get day&night
-					);
+			
+			Assembler.assemble(v_assembler, f_assembler);
 
-			var program : Program3D = context.createProgram();
-			program.upload(v_assembler.agalcode, f_assembler.agalcode);
-			context.setProgram(program);
+			Assembler.uploadBuffers(vertices, uvData, vertexNormals, indices);
 
-			var num_v : int = vertices.length/3; 
-			var vb : VertexBuffer3D = context.createVertexBuffer(num_v, 3);
-			vb.uploadFromVector(vertices, 0, num_v);
-
-			var uvb : VertexBuffer3D = context.createVertexBuffer(num_v, 2);
-			uvb.uploadFromVector(uvData, 0, num_v);
-
-			var nb : VertexBuffer3D = context.createVertexBuffer(num_v, 3);
-			nb.uploadFromVector(vertexNormals, 0, num_v);
-
-			//var tb : VertexBuffer3D = context.createVertexBuffer(num_v, 3);
-			//tb.uploadFromVector(vertexTangents, 3, num_v);
-
-			context.setVertexBufferAt(0, vb, 0, Context3DVertexBufferFormat.FLOAT_3);
-			context.setVertexBufferAt(1, uvb, 0, Context3DVertexBufferFormat.FLOAT_2);
-			context.setVertexBufferAt(2, nb, 0, Context3DVertexBufferFormat.FLOAT_3);
-
-			var num_i : uint = indices.length;
-			indexBuffer = context.createIndexBuffer(num_i);
-			indexBuffer.uploadFromVector(indices, 0, num_i);
-
-			context.setProgramConstantsFromVector(Context3DProgramType.FRAGMENT, 0, Vector.<Number>([1, 1, 1, 1]));
-
+			var fc : Vector.<Vector.<Number>> = new	Vector.<Vector.<Number>>();
+			fc.push(Vector.<Number>([1, 1, 1, 1]));//0
+			
 			var cloudAlpha : Number = 0.8;
-			context.setProgramConstantsFromVector(Context3DProgramType.FRAGMENT, 1, Vector.<Number>([cloudAlpha, cloudAlpha, cloudAlpha, 1]));
+			fc.push(Vector.<Number>([cloudAlpha, cloudAlpha, cloudAlpha, 1]));//1
 
 			var geoClock : GeoClock = GeoClock.getInstance();
 			solarPosition = geoClock.updateTerminatorMap();
+			fc.push(Vector.<Number>([solarPosition.x, solarPosition.y, solarPosition.z, 1]));//2
 
-			context.setProgramConstantsFromVector(Context3DProgramType.FRAGMENT, 2, Vector.<Number>([solarPosition.x, solarPosition.y, solarPosition.z, 1]));
+			fc.push(Vector.<Number>([-1, -1, -1, 1]));//3
 
-			context.setProgramConstantsFromVector(Context3DProgramType.FRAGMENT, 3, Vector.<Number>([-1, -1, -1, 1]));
+			fc.push(Vector.<Number>([0.0001, 0.0001, 0.0001, 0]));//4
 
-			context.setProgramConstantsFromVector(Context3DProgramType.FRAGMENT, 4, Vector.<Number>([0.0001, 0.0001, 0.0001, 0]));
+			fc.push(Vector.<Number>([0.3, 0.3, 0.3, 1]));//5
 
-			context.setProgramConstantsFromVector(Context3DProgramType.FRAGMENT, 5, Vector.<Number>([0.3, 0.3, 0.3, 1]));
-
-			context.setProgramConstantsFromVector(Context3DProgramType.FRAGMENT, 6, Vector.<Number>([4, 4, 4, 1]));
-
+			fc.push(Vector.<Number>([4, 4, 4, 1]));//6
+			
+			Assembler.uploadFragmentConstants(fc);
 
 		}
 
-		[Embed(source="../../res/earth.jpg")]
-		private var EarthSrc : Class;
-		private var earthSrc : Bitmap = new EarthSrc() as Bitmap;
-
-		[Embed(source="../../res/night.jpg")]
-		private var NightSrc : Class;
-		private var nightSrc : Bitmap = new NightSrc() as Bitmap;
-
-		[Embed(source="../../res/clouds.jpg")]
-		private var CloudsSrc : Class;
-		private var cloudsSrc : Bitmap = new CloudsSrc() as Bitmap;
-
-		private var solarPosition : Vector3D;
-
-		private function createTexture() : void {
-
-			var t0 : Texture = context.createTexture(textureW, textureH, Context3DTextureFormat.BGRA, true );
-			t0.uploadFromBitmapData( earthSrc.bitmapData );
-			context.setTextureAt(0, t0);
-
-			var t1: Texture = context.createTexture(textureW, textureH, Context3DTextureFormat.BGRA, true );
-			t1.uploadFromBitmapData( nightSrc.bitmapData );
-			context.setTextureAt(1, t1);
-
-			var t2 : Texture = context.createTexture(textureW, textureH, Context3DTextureFormat.BGRA, true );
-			t2.uploadFromBitmapData( cloudsSrc.bitmapData );
-			context.setTextureAt(2, t2);
-		}
 
 		private var rotation : Number = 0;
 		private var pers : PerspectiveMatrix3D;
@@ -278,11 +257,7 @@ package fplanet{
 			m.append(camera);
 			m.append(pers);
 
-			context.setProgramConstantsFromMatrix(Context3DProgramType.VERTEX, 0, m, true);
-			context.clear();
-
-			context.drawTriangles(indexBuffer);
-			context.present();
+			Assembler.render(m, Assembler.indexBuffer);
 		}
 
 	}

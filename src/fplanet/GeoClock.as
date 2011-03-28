@@ -91,6 +91,7 @@ package fplanet{
 			mtx.appendRotation(dec, Vector3D.X_AXIS);
 
 			v = Utils3D.projectVector(mtx, v);
+
 			return v;
 
 			//var shape : Shape = new Shape();
