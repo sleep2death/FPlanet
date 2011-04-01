@@ -23,7 +23,19 @@ package fplanet{
 
 		private var declination : Number;
 
-		public function updateTerminatorMap() : Vector3D {
+		private var count : int = -1;
+		private var sunPos : Vector3D;
+		private static const COUNT_LIMIT : uint = 60 * 60 * 5;
+
+		public function updateTerminatorMap(deltaRotation : Number = 0) : Vector3D {
+			if(count < COUNT_LIMIT && count >= 0){
+				return sunPos;	
+			}if(count == COUNT_LIMIT){
+				count = 0;
+			}else{
+				count++;
+			}
+
 			var currentDay : Date = new Date();
 			var year : Number = currentDay.fullYear;
 			var month : Number = currentDay.month + 1;
@@ -79,20 +91,18 @@ package fplanet{
 			var tau : Number = 360 * (UT - 12) / 24;
 			var dec : Number = declination;
 
-			trace("TAU: " + tau);
-
-			tau = 180 - tau + 180;
+			tau = 180 - tau + 180 + deltaRotation;
 			dec = 90 - dec;
 
-			var v : Vector3D = new Vector3D(1.1, 0, 0);
+			var v : Vector3D = new Vector3D(0.75, 0, 0);
 			
 			var mtx : Matrix3D = new Matrix3D();
 			mtx.appendRotation(tau, Vector3D.Y_AXIS);
 			mtx.appendRotation(dec, Vector3D.X_AXIS);
 
-			v = Utils3D.projectVector(mtx, v);
+			sunPos = Utils3D.projectVector(mtx, v);
 
-			return v;
+			return sunPos;
 
 			//var shape : Shape = new Shape();
 			//var g : Graphics = shape.graphics;

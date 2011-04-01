@@ -38,14 +38,15 @@
     <target name="compile" depends="shader">
         <mxmlc file="${app.src}/${app.name}.as" output="${app.bin}/${app.name}.swf" 
             default-background-color="0x000000" 
+            default-frame-rate="60"
             actionscript-file-encoding="UTF-8"
             static-link-runtime-shared-libraries="true" 
             debug="true"
             incremental="true">
 
-            <compiler.include-libraries dir="${app.libs}" append="true">
+            <!--<compiler.include-libraries dir="${app.libs}" append="true">
                 <include name="pb3dlib.swc"/>
-            </compiler.include-libraries>
+                </compiler.include-libraries>!-->
 
             <!-- Include the away3D core -->
             <!-- <compiler.source-path path-element="../away3d-core-broomstick/src"/> -->
