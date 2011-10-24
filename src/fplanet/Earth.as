@@ -49,16 +49,17 @@ package fplanet{
 		}
 
 		private function getContext3D() : void {
-			stage.viewPort = new Rectangle(0, 0, stageWidth, stageHeight);
+			stage.x = 0;
+			stage.y = 0;
+			//stage.viewPort = new Rectangle(0, 0, stageWidth, stageHeight);
 			stage.addEventListener(Event.CONTEXT3D_CREATE, onContext3DCreate);
 			stage.requestContext3D(Context3DRenderMode.AUTO);
 		}
 		
 
 		private function onContext3DCreate(evt : Event) : void {
-
 			context = stage.context3D;
-			context.configureBackBuffer(stageWidth, stageHeight, 4, true);
+			context.configureBackBuffer(stageWidth, stageHeight, 0, true);
 
 			Assembler.context = context;
 

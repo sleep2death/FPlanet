@@ -73,7 +73,6 @@ package fplanet {
 		}
 
 		public static function render(matrix : Matrix3D, indexBuffer : IndexBuffer3D) : void {
-
 			context.drawTriangles(indexBuffer);
 		}
 
